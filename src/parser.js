@@ -1,76 +1,132 @@
-let Parser = {
-    json: $ => $.object()||$.array(),
+let i = 0
+let j = 0
+export class Parser {
+    /** @type {import("./types").State[]} */
+    stack = [{ buffer: "", tree: [], index: 0 }]
 
-    object: $ => 
-      $.LCurly()&&
-      optional(
-        $.objectItem() &&
-        MANY(() => {
-          $.CONSUME(Comma)
-          $.SUBRULE2($.objectItem)
-        })
-      })
-      $.CONSUME(RCurly)
-    ,
+    /** @type {import("./types").Node[]} */
+    nodes = []
 
-    $.RULE("objectItem", () => {
-      $.CONSUME(StringLiteral)
-      $.CONSUME(Colon)
-      $.SUBRULE($.value)
-    })
-
-    $.RULE("array", () => {
-      $.CONSUME(LSquare)
-      $.OPTION(() => {
-        $.SUBRULE($.value)
-        $.MANY(() => {
-          $.CONSUME(Comma)
-          $.SUBRULE2($.value)
-        })
-      })
-      $.CONSUME(RSquare)
-    })
-
-    $.RULE("value", () => {
-      $.OR([
-        { ALT: () => $.CONSUME(StringLiteral) },
-        { ALT: () => $.CONSUME(NumberLiteral) },
-        { ALT: () => $.SUBRULE($.object) },
-        { ALT: () => $.SUBRULE($.array) },
-        { ALT: () => $.CONSUME(True) },
-        { ALT: () => $.CONSUME(False) },
-        { ALT: () => $.CONSUME(Null) }
-      ])
-    })
-
-    // very important to call this after all the rules have been defined.
-    // otherwise the parser may not work correctly as it will lack information
-    // derived during the self analysis phase.
-    this.performSelfAnalysis()
-  }
-}
-
-// ----------------- wrapping it all together -----------------
-
-// reuse the same parser instance.
-const parser = new JsonParser()
-
-module.exports = {
-  jsonTokens: allTokens,
-
-  JsonParser: JsonParser,
-
-  parse: function parse(text) {
-    const lexResult = JsonLexer.tokenize(text)
-    // setting a new input will RESET the parser instance's state.
-    parser.input = lexResult.tokens
-    // any top level rule may be used as an entry point
-    const cst = parser.json()
-
-    return {
-      cst: cst,
-      lexErrors: lexResult.errors,
-      parseErrors: parser.errors
+    /**
+     * @param {import("./types").Rules} rules
+     */
+    constructor(rules) {
+        for (let key in rules) {
+            let fn = rules[key]
+            // @ts-ignore
+            if (key == "skip") this.skip = fn
+            // @ts-ignore
+            this[key] = ($) => this.group(key, fn)
+        }
     }
-  }
+
+    /**
+     * @param {string} input
+     */
+    init(input) {
+        return this.stack = [{
+            index: 0,
+            buffer: input,
+            tree: []
+        }]
+    }
+
+    pushState() {
+        /** @type {import("./types").State} */
+        let state = {
+            ...this.current(),
+            tree: [],
+        }
+        console.log("create state", ++i)
+        this.stack.unshift(state)
+        return state
+    }
+
+    current() {
+        return this.stack[0]
+    }
+
+    popState() {
+        console.log("delete state", ++j)
+        return this.stack.shift()
+    }
+
+    /**
+     *
+     * @param {import("./types").State} state
+     */
+    mergeState(state) {
+        let prev = this.current()
+        prev.index = state.index
+        prev.buffer = state.buffer
+        prev.tree.push(...state.tree)
+    }
+
+    /**
+     * @param {string | number} name
+     */
+    parse(name) {
+        // @ts-ignore
+        let result = this[name]()
+        if (result) return this.current()
+    }
+
+    /**
+     * @param {string} type
+     * @param {($: Parser) => boolean} fn
+     */
+    group(type, fn) {
+        let state = this.pushState()
+        let start = state.index
+        let result = fn.call(this, this)
+        if (state !== this.popState()) {
+            throw Error()
+        }
+        if (!result) return false
+        /** @type {import("./types").Node} */
+        let node = {
+            type,
+            nodes: state.tree.map(item => item.index),
+            start,
+            end: state.index,
+        }
+        // @ts-ignore
+        if (typeof result == "object") node = { ...node, ...result }
+        state.tree = [{
+            index: this.nodes.push(node),
+            nodes: state.tree
+        }]
+        this.mergeState(state)
+        return true
+    }
+
+    /**
+    * @param {{ [Symbol.match](string: string): RegExpMatchArray | null; }} re
+    */
+    match(
+        re,
+        matcher = (/** @type {RegExpMatchArray} */ m,/** @type {import("./types").State} */ state) => ({
+            type: "token",
+            image: m[0],
+            list: [...m],
+            start: state.index,
+            end: (state.index += m[0].length),
+            // @ts-ignore
+            groups: m.groups,
+        }),
+        skip = true
+    ) {
+        if (skip) this.skip()
+        let state = this.current()
+        let m = state.buffer.match(re)
+        if (m) {
+            state.buffer = state.buffer.slice(m[0].length)
+            state.tree.push({
+                index: this.nodes.push(matcher(m, state)),
+            })
+            return true
+        }
+    }
+
+    skip() { }
 }

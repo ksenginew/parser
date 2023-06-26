@@ -1,18 +1,24 @@
 export interface State {
-    buffer:string,
-    nodes:Node[]
+    buffer: string,
+    index: number,
+    tree: TreeItem[]
     // [key:string]:any
 }
 
+export interface TreeItem{
+    index: number,
+    nodes?: TreeItem[]
+}
+
 export interface Node {
-    name: string
-    nodes?: Node[]
+    type: string
+    nodes?: number[]
     tag?: string
     [key: string]: any
 }
 
 export interface Token extends Node {
-    value: string
+    image: string
     list: string[]
     index?: number
     groups?: Record<string, string>
@@ -21,5 +27,5 @@ export interface Token extends Node {
 }
 
 export interface Rules {
-    [key:string]: ($:Rules)=> boolean
+    [key: string]: ($: Rules) => boolean
 }
