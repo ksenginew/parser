@@ -1,3 +1,7 @@
+export interface Options {
+    tracking: boolean
+}
+
 export interface State {
     buffer: string,
     index: number,
@@ -5,15 +9,16 @@ export interface State {
     // [key:string]:any
 }
 
-export interface TreeItem{
+export interface TreeItem {
     index: number,
     nodes?: TreeItem[]
 }
 
 export interface Node {
-    type: string
+    name: string
     nodes?: number[]
     tag?: string
+    location?: { start: number, end: number }
     [key: string]: any
 }
 

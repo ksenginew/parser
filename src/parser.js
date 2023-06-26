@@ -1,5 +1,3 @@
-let i = 0
-let j = 0
 export class Parser {
     /** @type {import("./types").State[]} */
     stack = [{ buffer: "", tree: [], index: 0 }]
@@ -9,8 +7,10 @@ export class Parser {
 
     /**
      * @param {import("./types").Rules} rules
+     * @param {Partial<import("./types").Options>} options
      */
-    constructor(rules) {
+    constructor(rules, options = {}) {
+        this.options = options
         for (let key in rules) {
             let fn = rules[key]
             // @ts-ignore
@@ -37,7 +37,6 @@ export class Parser {
             ...this.current(),
             tree: [],
         }
-        console.log("create state", ++i)
         this.stack.unshift(state)
         return state
     }
@@ -47,7 +46,6 @@ export class Parser {
     }
 
     popState() {
-        console.log("delete state", ++j)
         return this.stack.shift()
     }
 
@@ -72,10 +70,10 @@ export class Parser {
     }
 
     /**
-     * @param {string} type
+     * @param {string} name
      * @param {($: Parser) => boolean} fn
      */
-    group(type, fn) {
+    group(name, fn) {
         let state = this.pushState()
         let start = state.index
         let result = fn.call(this, this)
@@ -85,10 +83,12 @@ export class Parser {
         if (!result) return false
         /** @type {import("./types").Node} */
         let node = {
-            type,
+            name,
             nodes: state.tree.map(item => item.index),
-            start,
-            end: state.index,
+            location: this.options.tracking ? {
+                start,
+                end: state.index,
+            } : undefined
         }
         // @ts-ignore
         if (typeof result == "object") node = { ...node, ...result }
@@ -106,11 +106,13 @@ export class Parser {
     match(
         re,
         matcher = (/** @type {RegExpMatchArray} */ m,/** @type {import("./types").State} */ state) => ({
-            type: "token",
+            name: "token",
             image: m[0],
             list: [...m],
-            start: state.index,
-            end: (state.index += m[0].length),
+            location: this.options.tracking ? {
+                start: state.index,
+                end: (state.index += m[0].length)
+            } : undefined,
             // @ts-ignore
             groups: m.groups,
         }),
@@ -129,4 +131,29 @@ export class Parser {
     }
 
     skip() { }
+}
+
+/**
+ * @param {any[]} args
+ */
+export function OPTION(...args) {
+    return true
+}
+
+/**
+ * @param {() => boolean} fn
+ */
+export function MANY(fn, {gate}) {
+    while ((!gate || gate()) && fn()) { }
+    return true
+}
+/**
+ * @param {() => boolean} fn
+ */
+export function OR(fns, {gate}) {
+    for(let fn of fns){
+        if(gate&&!gate())return false
+        if(fn()) return true
+    }
+    return false
 }
