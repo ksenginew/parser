@@ -1,9 +1,6 @@
 export class Parser {
     /** @type {import("./types").State[]} */
-    stack = [{ buffer: "", tree: [], index: 0 }]
-
-    /** @type {import("./types").Node[]} */
-    nodes = []
+    stack = [{ buffer: "", tree: [], nodes: [], index: 0, id: 0 }]
 
     /**
      * @param {import("./types").Rules} rules
@@ -26,7 +23,9 @@ export class Parser {
     init(input) {
         return this.stack = [{
             index: 0,
+            id: 0,
             buffer: input,
+            nodes: [],
             tree: []
         }]
     }
@@ -55,9 +54,10 @@ export class Parser {
      */
     mergeState(state) {
         let prev = this.current()
-        prev.index = state.index
-        prev.buffer = state.buffer
-        prev.tree.push(...state.tree)
+        Object.assign(prev, {
+            ...state,
+            tree: [...prev.tree, ...state.tree]
+        })
     }
 
     /**
@@ -66,7 +66,8 @@ export class Parser {
     parse(name) {
         // @ts-ignore
         let result = this[name]()
-        if (result) return this.current()
+        if (result)
+            return this.current()
     }
 
     /**
@@ -84,7 +85,7 @@ export class Parser {
         /** @type {import("./types").Node} */
         let node = {
             name,
-            nodes: state.tree.map(item => item.index),
+            nodes: state.tree,
             location: this.options.tracking ? {
                 start,
                 end: state.index,
@@ -92,10 +93,7 @@ export class Parser {
         }
         // @ts-ignore
         if (typeof result == "object") node = { ...node, ...result }
-        state.tree = [{
-            index: this.nodes.push(node),
-            nodes: state.tree
-        }]
+        state.tree = [state.nodes.push(node) - 1]
         this.mergeState(state)
         return true
     }
@@ -123,9 +121,7 @@ export class Parser {
         let m = state.buffer.match(re)
         if (m) {
             state.buffer = state.buffer.slice(m[0].length)
-            state.tree.push({
-                index: this.nodes.push(matcher(m, state)),
-            })
+            state.tree.push(state.nodes.push(matcher(m, state)) - 1)
             return true
         }
     }
@@ -142,18 +138,20 @@ export function OPTION(...args) {
 
 /**
  * @param {() => boolean} fn
+ * @param {{gate?: () => boolean}} options
  */
-export function MANY(fn, {gate}) {
+export function MANY(fn, { gate }) {
     while ((!gate || gate()) && fn()) { }
     return true
 }
 /**
- * @param {() => boolean} fn
+ * @param {(() => boolean)[]} fns
+ * @param {{gate?: () => boolean}} options
  */
-export function OR(fns, {gate}) {
-    for(let fn of fns){
-        if(gate&&!gate())return false
-        if(fn()) return true
+export function OR(fns, { gate } = {}) {
+    for (let fn of fns) {
+        if (gate && !gate()) return false
+        if (fn()) return true
     }
     return false
 }

@@ -5,13 +5,10 @@ export interface Options {
 export interface State {
     buffer: string,
     index: number,
-    tree: TreeItem[]
+    nodes: Node[]
+    tree: number[]
+    id:number
     // [key:string]:any
-}
-
-export interface TreeItem {
-    index: number,
-    nodes?: TreeItem[]
 }
 
 export interface Node {

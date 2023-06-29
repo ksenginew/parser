@@ -54,12 +54,15 @@ let JsonParser = new Parser({
     $.match(False) ||
     $.match(Null)
 
-})
-JsonParser.init(JSON.stringify({
-  name: "test",
-  age:33,
-  array: [1,2,3,"dd"]
-},undefined,2))
+},{tracking:true})
+JsonParser.init(json_sample1k)
 
-JsonParser.parse("json")
-console.log(JsonParser.nodes.filter(node=>node.type="token").map(a=>a.image).join(''))
+
+let nodes = JsonParser.parse("json").nodes
+function buildtree(node){
+  if(node.nodes)
+  node.nodes = node.nodes.map(n => buildtree(nodes[n]))
+  else return node.image
+  return node
+}
+buildtree(nodes[nodes.length-1])
