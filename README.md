@@ -1,11 +1,13 @@
 # Experimental parser
 
 This parser is based on concept of state. Here let's see an example of parser
+
 this parser has two paths
     - boolean
         - true
         - false
     - name
+
 1. parser creates a state. then start parsing boolean on that scope.
 2. when we fails. then it should be a name. so delete the state.
 3. create a new state and start parsing name.
