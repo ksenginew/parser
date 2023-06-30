@@ -138,15 +138,15 @@ export function OPTION(...args) {
 
 /**
  * @param {() => boolean} fn
- * @param {{gate?: () => boolean}} options
+ * @param {{gate?: () => boolean}} [options]
  */
-export function MANY(fn, { gate }) {
+export function MANY(fn, { gate } = {}) {
     while ((!gate || gate()) && fn()) { }
     return true
 }
 /**
  * @param {(() => boolean)[]} fns
- * @param {{gate?: () => boolean}} options
+ * @param {{gate?: () => boolean}} [options]
  */
 export function OR(fns, { gate } = {}) {
     for (let fn of fns) {

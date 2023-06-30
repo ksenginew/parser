@@ -1,5 +1,20 @@
-// @ts-nocheck
-import { Parser ,MANY} from "../../src/parser.js"
+# Experimental parser
+
+This parser is based on concept of state. Here let's see an example of parser
+this parser has two paths
+    - boolean
+        - true
+        - false
+    - name
+1. parser creates a state. then start parsing boolean on that scope.
+2. when we fails. then it should be a name. so delete the state.
+3. create a new state and start parsing name.
+4. success. so this scope is merged to parent scope
+5. return the results (LOL)
+
+A simple JSON parser looks like,
+```js
+import { Parser } from "../../src/parser.js"
 
 const True = /^true/
 const False = /^false/
@@ -21,7 +36,7 @@ export let JsonParser = new Parser({
   object: $ =>
     $.match(LCurly) &&
     ($.objectItem() &&
-      MANY(() =>
+      many(() =>
         $.match(Comma) &&
         $.objectItem()
       ), true) &&
@@ -35,7 +50,7 @@ export let JsonParser = new Parser({
   array: $ =>
     $.match(LSquare) &&
     ($.value() &&
-      MANY(() =>
+      many(() =>
         $.match(Comma) &&
         $.value()
       ), true)
@@ -51,3 +66,8 @@ export let JsonParser = new Parser({
     $.match(Null)
 
 }, { tracking: true })
+```
+
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/ksenginew/parser/tests/json/parser.js)
+
+Just run `npm test`
