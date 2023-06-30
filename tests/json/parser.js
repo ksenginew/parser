@@ -1,6 +1,5 @@
 // @ts-nocheck
 import { Parser } from "../../src/parser.js"
-import { json_sample1k } from "./largefile.js"
 
 const True = /^true/
 const False = /^false/
@@ -18,7 +17,7 @@ let many = (fn) => {
   while (fn()) { }
   return true
 }
-let JsonParser = new Parser({
+export let JsonParser = new Parser({
   skip:$=> $.match(WhiteSpace,undefined,false),
   json: $ => $.object() || $.array(),
 
@@ -55,14 +54,3 @@ let JsonParser = new Parser({
     $.match(Null)
 
 },{tracking:true})
-JsonParser.init(json_sample1k)
-
-
-let nodes = JsonParser.parse("json").nodes
-function buildtree(node){
-  if(node.nodes)
-  node.nodes = node.nodes.map(n => buildtree(nodes[n]))
-  else return node.image
-  return node
-}
-buildtree(nodes[nodes.length-1])
