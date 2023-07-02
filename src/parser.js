@@ -62,30 +62,47 @@ export class Parser {
             return this.current()
     }
 
+
     /**
-     * @param {string} name
-     * @param {($: Parser) => boolean} fn
+     * @param {keyof this} rule
+     * @param {{
+    *   tag?: string | boolean
+    *   name?: string
+    * }} [options]
+    */
+    RULE(rule, { tag, name } = {}) {
+        if (typeof rule !== 'string') return false
+        return this.GROUP(function () {
+            let state = this.pushState()
+            let start = state.index
+            let result = /** @type {?} */(this[rule]).call(this, this)
+            if (!result) return false
+            /** @type {import("./types").Node} */
+            let node = {
+                name: name || rule,
+                nodes: state.tree,
+                location: this.options.tracking ? {
+                    start,
+                    end: state.index,
+                } : undefined
+            }
+            // @ts-ignore
+            if (typeof result == "object") node = { ...node, ...result }
+            state.tree = [state.nodes.push(node) - 1]
+            return true
+        })
+    }
+
+    /**
+     * @param {(this:this, $: Parser) => boolean} fn
      */
-    GROUP(name, fn) {
+    GROUP(fn) {
         let state = this.pushState()
-        let start = state.index
         let result = fn.call(this, this)
         if (state !== this.popState()) {
             throw Error()
         }
         if (!result) return false
-        /** @type {import("./types").Node} */
-        let node = {
-            name,
-            nodes: state.tree,
-            location: this.options.tracking ? {
-                start,
-                end: state.index,
-            } : undefined
-        }
-        // @ts-ignore
-        if (typeof result == "object") node = { ...node, ...result }
-        state.tree = [state.nodes.push(node) - 1]
         this.mergeState(state)
         return true
     }
@@ -93,7 +110,7 @@ export class Parser {
     /**
     * @param {{ [Symbol.match](string: string): RegExpMatchArray | null; }} re
     */
-    match(
+    MATCH(
         re,
         matcher = (/** @type {RegExpMatchArray} */ m,/** @type {import("./types").State} */ state) => ({
             name: "token",
