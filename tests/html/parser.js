@@ -1,10 +1,18 @@
-import { Parser, MANY } from "../../src/parser.js"
+import { Parser, MANY } from "../../src/parser.js";
 
-export let HtmlParser = new Parser({
-  html: $ => $.element(),
-  element: $ => $.TAG_OPEN() && $.tagname() && $.TAG_OPEN() && $.TAG_SLASH() && $.TAG_NAME() && $.TAG_CLOSE(),
+export let HtmlParser = new Parser(
+  {
+    html: ($) => $.element(),
+    element: ($) =>
+      $.TAG_OPEN() &&
+      $.tagname() &&
+      $.TAG_OPEN() &&
+      $.TAG_SLASH() &&
+      $.TAG_NAME() &&
+      $.TAG_CLOSE(),
+  },
+  { tracking: true }
+);
 
-}, { tracking: true })
-
-HtmlParser.init("<html></html>")
-console.log(HtmlParser.parse('html')?.nodes)
+HtmlParser.init("<html></html>");
+console.log(HtmlParser.parse("html")?.nodes);

@@ -1,6 +1,4 @@
-export 
-
-const sample = `[
+export const sample = `[
     {
       "_id": "649e54607f67d8fe754614ea",
       "index": 0,
@@ -226,4 +224,4 @@ const sample = `[
       "greeting": "Hello, Jamie Contreras! You have 3 unread messages.",
       "favoriteFruit": "apple"
     }
-  ]`
+  ]`;
