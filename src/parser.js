@@ -3,18 +3,10 @@ export class Parser {
     stack = [{ buffer: "", tree: [], nodes: [], index: 0, id: 0 }]
 
     /**
-     * @param {import("./types").Rules} rules
      * @param {Partial<import("./types").Options>} options
      */
-    constructor(rules, options = {}) {
+    constructor(options = {}) {
         this.options = options
-        for (let key in rules) {
-            let fn = rules[key]
-            // @ts-ignore
-            if (key == "skip") this.skip = fn
-            // @ts-ignore
-            this[key] = ($) => this.group(key, fn)
-        }
     }
 
     /**
@@ -74,7 +66,7 @@ export class Parser {
      * @param {string} name
      * @param {($: Parser) => boolean} fn
      */
-    group(name, fn) {
+    GROUP(name, fn) {
         let state = this.pushState()
         let start = state.index
         let result = fn.call(this, this)
@@ -127,31 +119,4 @@ export class Parser {
     }
 
     skip() { }
-}
-
-/**
- * @param {any[]} args
- */
-export function OPTION(...args) {
-    return true
-}
-
-/**
- * @param {() => boolean} fn
- * @param {{gate?: () => boolean}} [options]
- */
-export function MANY(fn, { gate } = {}) {
-    while ((!gate || gate()) && fn()) { }
-    return true
-}
-/**
- * @param {(() => boolean)[]} fns
- * @param {{gate?: () => boolean}} [options]
- */
-export function OR(fns, { gate } = {}) {
-    for (let fn of fns) {
-        if (gate && !gate()) return false
-        if (fn()) return true
-    }
-    return false
 }

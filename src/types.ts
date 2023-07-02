@@ -1,3 +1,5 @@
+import { Parser } from "./parser"
+
 export interface Options {
     tracking: boolean
 }
@@ -7,7 +9,7 @@ export interface State {
     index: number,
     nodes: Node[]
     tree: number[]
-    id:number
+    id: number
     // [key:string]:any
 }
 
@@ -29,5 +31,5 @@ export interface Token extends Node {
 }
 
 export interface Rules {
-    [key: string]: ($: Rules) => boolean
+    [key: string]: ($: Parser & Record<string, () => (boolean|undefined)>) => (boolean|undefined)
 }
