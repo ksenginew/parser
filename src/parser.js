@@ -59,7 +59,7 @@ export class Parser {
    */
   parse(name) {
     // @ts-ignore
-    let result = this[name].call(this, this);
+    let result = this.RULE(name)
     if (result) return this.current();
   }
 
@@ -73,7 +73,7 @@ export class Parser {
   RULE(rule, { tag, name } = {}) {
     if (typeof rule !== "string") return false;
     return this.GROUP(function () {
-      let state = this.pushState();
+      let state = this.current();
       let start = state.index;
       let result = /** @type {?} */ (this[rule]).call(this, this);
       if (!result) return false;
@@ -102,6 +102,7 @@ export class Parser {
     let state = this.pushState();
     let result = fn.call(this, this);
     if (state !== this.popState()) {
+      console.error(this.stack)
       throw Error();
     }
     if (!result) return false;
@@ -132,7 +133,7 @@ export class Parser {
     }),
     skip = true
   ) {
-    if (skip) this.skip();
+    if (skip) this.RULE("skip")
     let state = this.current();
     let m = state.buffer.match(re);
     if (m) {
@@ -142,7 +143,10 @@ export class Parser {
     }
   }
 
-  skip() {}
+  /**
+   * @param {this} $
+   */
+  skip($) {}
 }
 
 /**

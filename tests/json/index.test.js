@@ -14,7 +14,7 @@ function buildtree(node, nodes) {
 }
 
 test("JSON", (t) => {
-  let parser = new JsonParser();
+  let parser = new JsonParser({tracking:true});
   parser.init(
     JSON.stringify({
       name: "ks",
@@ -29,7 +29,7 @@ test("JSON", (t) => {
 });
 
 test("JSON2", (t) => {
-  let parser = new JsonParser();
+  let parser = new JsonParser({tracking:true});
 
   parser.init(sample);
 
