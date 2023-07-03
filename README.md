@@ -13,7 +13,7 @@ this parser has two paths - boolean - true - false - name
 A simple JSON parser looks like,
 
 ```js
-import { Parser } from "../../src/parser.js";
+import { Parser,MANY } from "parser.js";
 
 const True = /^true/;
 const False = /^false/;
@@ -28,34 +28,50 @@ const StringLiteral = /^"(?:[^\\"]|\\(?:[bfnrtv"\\/]|u[0-9a-fA-F]{4}))*"/;
 const NumberLiteral = /^-?(0|[1-9]\d*)(\.\d+)?([eE][+-]?\d+)?/;
 const WhiteSpace = /^[ \t\n\r]+/;
 
-export let JsonParser = new Parser(
-  {
-    skip: ($) => $.match(WhiteSpace, undefined, false),
-    json: ($) => $.object() || $.array(),
+export class JsonParser extends Parser {
+  // @ts-ignore
+  skip = ($) => $.MATCH(WhiteSpace, undefined, false);
 
-    object: ($) =>
-      $.match(LCurly) &&
-      ($.objectItem() && many(() => $.match(Comma) && $.objectItem()), true) &&
-      $.match(RCurly),
+  // @ts-ignore
+  json = ($) => 
+     $.RULE("object") || $.RULE("array");
 
-    objectItem: ($) => $.match(StringLiteral) && $.match(Colon) && $.value(),
+  // @ts-ignore
+  object = ($) =>
+    $.MATCH(LCurly) &&
+    ($.RULE("objectItem") && MANY(() => $.MATCH(Comma) && $.RULE("objectItem")),
+    true) &&
+    $.MATCH(RCurly);
 
-    array: ($) =>
-      $.match(LSquare) &&
-      ($.value() && many(() => $.match(Comma) && $.value()), true) &&
-      $.match(RSquare),
+  // @ts-ignore
+  objectItem = ($) =>
+    $.MATCH(StringLiteral) && $.MATCH(Colon) && $.RULE("value");
 
-    value: ($) =>
-      $.match(StringLiteral) ||
-      $.match(NumberLiteral) ||
-      $.object() ||
-      $.array() ||
-      $.match(True) ||
-      $.match(False) ||
-      $.match(Null),
-  },
-  { tracking: true }
-);
+  // @ts-ignore
+  array = ($) =>
+    $.MATCH(LSquare) &&
+    ($.RULE("value") && MANY(() => $.MATCH(Comma) && $.RULE("value")), true) &&
+    $.MATCH(RSquare);
+
+  // @ts-ignore
+  value = ($) =>
+    $.MATCH(StringLiteral) ||
+    $.MATCH(NumberLiteral) ||
+    $.RULE("object") ||
+    $.RULE("array") ||
+    $.MATCH(True) ||
+    $.MATCH(False) ||
+    $.MATCH(Null);
+}
+```
+
+then use it,
+```js
+let parser = new JsonParser({tracking:true});
+
+parser.init(sample);
+let nodes = parser.parse("json")?.nodes;
+console.log(nodes)
 ```
 
 [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/ksenginew/parser/tests/json/parser.js)
