@@ -74,6 +74,6 @@ let nodes = parser.parse("json")?.nodes;
 console.log(nodes)
 ```
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/ksenginew/parser/tests/json/parser.js)
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/ksenginew/parser?file=tests%2Fjson%2Fparser.js)
 
 Just run `npm test`
