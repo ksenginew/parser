@@ -13,7 +13,7 @@ this parser has two paths - boolean - true - false - name
 A simple JSON parser looks like,
 
 ```js
-import { Parser,MANY } from "parser.js";
+import { Parser, MANY } from "parser.js";
 
 const True = /^true/;
 const False = /^false/;
@@ -33,8 +33,7 @@ export class JsonParser extends Parser {
   skip = ($) => $.MATCH(WhiteSpace, undefined, false);
 
   // @ts-ignore
-  json = ($) => 
-     $.RULE("object") || $.RULE("array");
+  json = ($) => $.RULE("object") || $.RULE("array");
 
   // @ts-ignore
   object = ($) =>
@@ -66,12 +65,13 @@ export class JsonParser extends Parser {
 ```
 
 then use it,
+
 ```js
-let parser = new JsonParser({tracking:true});
+let parser = new JsonParser({ tracking: true });
 
 parser.init(sample);
 let nodes = parser.parse("json")?.nodes;
-console.log(nodes)
+console.log(nodes);
 ```
 
 [![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/fork/github/ksenginew/parser/tree/main?file=tests%2Fjson%2Fparser.js)

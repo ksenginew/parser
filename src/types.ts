@@ -2,6 +2,7 @@ import { Parser } from "./parser";
 
 export interface Options {
   tracking: boolean;
+  skip: ($: Parser) => boolean | undefined;
 }
 
 export interface State {
@@ -32,6 +33,6 @@ export interface Token extends Node {
 
 export interface Rules {
   [key: string]: (
-    $: Parser & Record<string, () => boolean | undefined>
+    $: Parser & Record<string, () => boolean | undefined>,
   ) => boolean | undefined;
 }

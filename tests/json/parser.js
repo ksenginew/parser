@@ -1,4 +1,4 @@
-import { Parser,MANY } from "../../src/parser.js";
+import { Parser, many } from "../../src/parser.js";
 
 const True = /^true/;
 const False = /^false/;
@@ -13,38 +13,38 @@ const StringLiteral = /^"(?:[^\\"]|\\(?:[bfnrtv"\\/]|u[0-9a-fA-F]{4}))*"/;
 const NumberLiteral = /^-?(0|[1-9]\d*)(\.\d+)?([eE][+-]?\d+)?/;
 const WhiteSpace = /^[ \t\n\r]+/;
 
-export class JsonParser extends Parser {
-  // @ts-ignore
-  skip = ($) => $.MATCH(WhiteSpace, undefined, false);
+/** @param {Parser} $ */
+export let skip = ($) => $.match(WhiteSpace, undefined, false);
 
-  // @ts-ignore
-  json = ($) => 
-     $.RULE("object") || $.RULE("array");
+/** @param {Parser} $ */
+export let json = ($) => $.rule("object", object) || $.rule("array", array);
 
-  // @ts-ignore
-  object = ($) =>
-    $.MATCH(LCurly) &&
-    ($.RULE("objectItem") && MANY(() => $.MATCH(Comma) && $.RULE("objectItem")),
-    true) &&
-    $.MATCH(RCurly);
+/** @param {Parser} $ */
+export let object = ($) =>
+  $.match(LCurly) &&
+  ($.rule("objectItem", objectItem) &&
+    many(() => $.match(Comma) && $.rule("objectItem", objectItem)),
+  true) &&
+  $.match(RCurly);
 
-  // @ts-ignore
-  objectItem = ($) =>
-    $.MATCH(StringLiteral) && $.MATCH(Colon) && $.RULE("value");
+/** @param {Parser} $ */
+export let objectItem = ($) =>
+  $.match(StringLiteral) && $.match(Colon) && $.rule("value", value);
 
-  // @ts-ignore
-  array = ($) =>
-    $.MATCH(LSquare) &&
-    ($.RULE("value") && MANY(() => $.MATCH(Comma) && $.RULE("value")), true) &&
-    $.MATCH(RSquare);
+/** @param {Parser} $ */
+export let array = ($) =>
+  $.match(LSquare) &&
+  ($.rule("value", value) &&
+    many(() => $.match(Comma) && $.rule("value", value)),
+  true) &&
+  $.match(RSquare);
 
-  // @ts-ignore
-  value = ($) =>
-    $.MATCH(StringLiteral) ||
-    $.MATCH(NumberLiteral) ||
-    $.RULE("object") ||
-    $.RULE("array") ||
-    $.MATCH(True) ||
-    $.MATCH(False) ||
-    $.MATCH(Null);
-}
+/** @param {Parser} $ */
+export let value = ($) =>
+  $.match(StringLiteral) ||
+  $.match(NumberLiteral) ||
+  $.rule("object", object) ||
+  $.rule("array", array) ||
+  $.match(True) ||
+  $.match(False) ||
+  $.match(Null);

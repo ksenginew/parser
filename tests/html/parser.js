@@ -1,18 +1,27 @@
-import { Parser, MANY } from "../../src/parser.js";
+import { Parser, many } from "../../src/parser.js";
 
-export let HtmlParser = new Parser(
-  {
-    html: ($) => $.element(),
-    element: ($) =>
-      $.TAG_OPEN() &&
-      $.tagname() &&
-      $.TAG_OPEN() &&
-      $.TAG_SLASH() &&
-      $.TAG_NAME() &&
-      $.TAG_CLOSE(),
-  },
-  { tracking: true }
-);
+const HTML_COMMENT = /^\*<!--.*?-->\*/;
+const CUSTOM_COMMENT = /^<[?!%].*?>/;
+const TAG_OPEN = "<";
+const HTML_TEXT = /^[^<]+/;
 
-HtmlParser.init("<html></html>");
-console.log(HtmlParser.parse("html")?.nodes);
+// tag declarations
+
+let TAG_CLOSE = ">";
+let TAG_SLASH_CLOSE = "/>";
+let TAG_SLASH = "/";
+
+// lexing mode for attribute values
+
+const TAG_EQUALS = "=";
+const TAG_NAME = /^[^\s\/>]+/;
+const WS = /^\s+/;
+
+/** @param {Parser} $ */
+export let skip = ($) => $.match(WS, undefined, false);
+
+/** @param {Parser} $ */
+export let html = ($) => many(() => $.rule("tag", tag));
+
+/** @param {Parser} $ */
+export let tag = ($) => $.eat(TAG_OPEN) && $.eat(TAG_CLOSE);
