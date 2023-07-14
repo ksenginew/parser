@@ -24,4 +24,15 @@ export let skip = ($) => $.match(WS, undefined, false);
 export let html = ($) => many(() => $.rule("tag", tag));
 
 /** @param {Parser} $ */
-export let tag = ($) => $.eat(TAG_OPEN) && $.eat(TAG_CLOSE);
+export let tag = ($) => TAG_OPEN &&
+    $.eat(TAG_NAME) &&
+    $.many(htmlAttribute, { name: 'attr' }) &&
+    $.or([
+        () => $.eat(TAG_CLOSE) &&
+            $.optional(() => $.rule('htmlContent', htmlContent) &&
+                $.eat(TAG_OPEN) &&
+                $.eat(TAG_SLASH) &&
+                $.eat(TAG_NAME) &&
+                $.eat(TAG_CLOSE)),
+        () => $.eat(TAG_SLASH_CLOSE)
+    ])

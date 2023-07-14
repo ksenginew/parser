@@ -14,37 +14,37 @@ const NumberLiteral = /^-?(0|[1-9]\d*)(\.\d+)?([eE][+-]?\d+)?/;
 const WhiteSpace = /^[ \t\n\r]+/;
 
 /** @param {Parser} $ */
-export let skip = ($) => $.match(WhiteSpace, undefined, false);
+export let skip = ($) => $.eat(WhiteSpace, undefined, false);
 
 /** @param {Parser} $ */
 export let json = ($) => $.rule("object", object) || $.rule("array", array);
 
 /** @param {Parser} $ */
 export let object = ($) =>
-  $.match(LCurly) &&
+  $.eat(LCurly) &&
   ($.rule("objectItem", objectItem) &&
-    many(() => $.match(Comma) && $.rule("objectItem", objectItem)),
+    many(() => $.eat(Comma) && $.rule("objectItem", objectItem)),
   true) &&
-  $.match(RCurly);
+  $.eat(RCurly);
 
 /** @param {Parser} $ */
 export let objectItem = ($) =>
-  $.match(StringLiteral) && $.match(Colon) && $.rule("value", value);
+  $.eat(StringLiteral) && $.eat(Colon) && $.rule("value", value);
 
 /** @param {Parser} $ */
 export let array = ($) =>
-  $.match(LSquare) &&
+  $.eat(LSquare) &&
   ($.rule("value", value) &&
-    many(() => $.match(Comma) && $.rule("value", value)),
+    many(() => $.eat(Comma) && $.rule("value", value)),
   true) &&
-  $.match(RSquare);
+  $.eat(RSquare);
 
 /** @param {Parser} $ */
 export let value = ($) =>
-  $.match(StringLiteral) ||
-  $.match(NumberLiteral) ||
+  $.eat(StringLiteral) ||
+  $.eat(NumberLiteral) ||
   $.rule("object", object) ||
   $.rule("array", array) ||
-  $.match(True) ||
-  $.match(False) ||
-  $.match(Null);
+  $.eat(True) ||
+  $.eat(False) ||
+  $.eat(Null);
