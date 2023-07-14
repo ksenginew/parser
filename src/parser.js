@@ -7,6 +7,7 @@ export class Parser {
    */
   constructor(options = {}) {
     this.options = options;
+    this.skip = options.skip || (() => false);
   }
 
   /**
@@ -55,31 +56,31 @@ export class Parser {
   }
 
   /**
-   * @param {string | number} name
+   * @param {string} name
+   * @param {(this: this, $: this) => boolean | undefined } fn
    */
-  parse(name) {
-    // @ts-ignore
-    let result = this.RULE(name)
+  parse(name, fn) {
+    debugger;
+    let result = this.rule(name, fn);
     if (result) return this.current();
   }
 
   /**
-   * @param {keyof this} rule
+   * @param {string} name
+   * @param {(this: this, $: this) => boolean | undefined} fn
    * @param {{
    *   tag?: string | boolean
-   *   name?: string
    * }} [options]
    */
-  RULE(rule, { tag, name } = {}) {
-    if (typeof rule !== "string") return false;
-    return this.GROUP(function () {
+  rule(name, fn, { tag } = {}) {
+    return this.group(function () {
       let state = this.current();
       let start = state.index;
-      let result = /** @type {?} */ (this[rule]).call(this, this);
+      let result = fn.call(this, this);
       if (!result) return false;
       /** @type {import("./types").Node} */
       let node = {
-        name: name || rule,
+        name,
         nodes: state.tree,
         location: this.options.tracking
           ? {
@@ -98,12 +99,12 @@ export class Parser {
   /**
    * @param {(this:this, $: Parser) => boolean} fn
    */
-  GROUP(fn) {
+  group(fn) {
     let state = this.pushState();
     let result = fn.call(this, this);
     if (state !== this.popState()) {
-      console.error(this.stack)
-      throw Error();
+      console.error(this.stack);
+      throw Error("bad state");
     }
     if (!result) return false;
     this.mergeState(state);
@@ -113,11 +114,11 @@ export class Parser {
   /**
    * @param {RegExp} re
    */
-  MATCH(
+  match(
     re,
     matcher = (
       /** @type {RegExpMatchArray} */ m,
-      /** @type {import("./types").State} */ state
+      /** @type {import("./types").State} */ state,
     ) => ({
       name: "token",
       image: m[0],
@@ -131,9 +132,9 @@ export class Parser {
       // @ts-ignore
       groups: m.groups,
     }),
-    skip = true
+    skip = true,
   ) {
-    if (skip) this.RULE("skip")
+    if (skip) this.rule("skip", this.skip);
     let state = this.current();
     let m = state.buffer.match(re);
     if (m) {
@@ -144,9 +145,36 @@ export class Parser {
   }
 
   /**
-   * @param {this} $
+   * @param {string} re
    */
-  skip($) {}
+  eat(
+    re,
+    matcher = (
+      /** @type {RegExpMatchArray} */ m,
+      /** @type {import("./types").State} */ state,
+    ) => ({
+      name: "token",
+      image: m[0],
+      list: [...m],
+      location: this.options.tracking
+        ? {
+            start: state.index,
+            end: (state.index += m[0].length),
+          }
+        : undefined,
+      // @ts-ignore
+      groups: m.groups,
+    }),
+    skip = true,
+  ) {
+    if (skip) this.rule("skip", this.skip);
+    let state = this.current();
+    if (state.buffer.startsWith(re)) {
+      state.buffer = state.buffer.slice(re.length);
+      state.tree.push(state.nodes.push(matcher([re], state)) - 1);
+      return true;
+    }
+  }
 }
 
 /**
@@ -154,14 +182,14 @@ export class Parser {
  * @param {RegExp} re
  */
 export function TOKEN(re) {
-  return this.MATCH(re);
+  return this.match(re);
 }
 
 /**
- * @param {() => boolean} fn
- * @param {{gate?: () => boolean}} [options]
+ * @param {() => boolean | undefined} fn
+ * @param {{gate?: () => boolean | undefined}} [options]
  */
-export function MANY(fn, { gate } = {}) {
+export function many(fn, { gate } = {}) {
   while ((!gate || gate()) && fn()) {}
   return true;
 }
