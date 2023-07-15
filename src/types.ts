@@ -36,3 +36,15 @@ export interface Rules {
     $: Parser & Record<string, () => boolean | undefined>,
   ) => boolean | undefined;
 }
+
+export interface TokenType {
+  name: string;
+  GROUP?: string;
+  PATTERN?: TokenPattern;
+  LABEL?: string;
+  LONGER_ALT?: TokenType | TokenType[];
+  START_CHARS_HINT?: (string | number)[];
+}
+
+type TokenPattern = RegExp | string // | CustomPatternMatcherFunc | ICustomPattern
+
