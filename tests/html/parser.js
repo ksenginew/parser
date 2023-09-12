@@ -45,6 +45,7 @@ export let tag = ($) => {
         $.eat(TAG_OPEN) &&
         $.eat(TAG_NAME, true, (token) => {
             tagName = token.image;
+            console.log(tagName)
             return token;
         }) &&
         $.many(attr, { name: "attr" }) &&
@@ -52,11 +53,11 @@ export let tag = ($) => {
             () =>
                 $.eat(TAG_CLOSE) && VOID_ELEMENTS.test(tagName)
                     ? true
-                    : (UNKNOWN.test(tagName) ? $.eat(new RegExp(`[^]*(?=<\\/${tagName}\\s*>)`)) : html($)) &&
-                    $.eat(TAG_OPEN) &&
-                    $.eat(TAG_SLASH) &&
-                    $.eat(tagName) &&
-                    $.eat(TAG_CLOSE),
+                    : (UNKNOWN.test(tagName) ? $.eat(new RegExp(`^[^]*(?=<\\/${tagName}\\s*>)`)) : html($)) &&
+                    $.optional(() => $.eat(TAG_OPEN) &&
+                        $.eat(TAG_SLASH) &&
+                        $.eat(tagName) &&
+                        $.eat(TAG_CLOSE)),
             () => $.eat(TAG_SLASH_CLOSE),
         ])
     );

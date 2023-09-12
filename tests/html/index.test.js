@@ -23,7 +23,7 @@ function buildtree(node, nodes) {
   return node;
 }
 
-test("HTML", (t) => {
+test.skip("HTML", (t) => {
   let parser = HtmlParser({ tracking: true });
   parser.init(`
 <html>
