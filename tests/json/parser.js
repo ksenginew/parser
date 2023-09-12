@@ -1,4 +1,4 @@
-import { Parser, many } from "../../src/parser.js";
+import { Parser } from "../../src/parser.js";
 
 const True = /^true/;
 const False = /^false/;
@@ -14,37 +14,41 @@ const NumberLiteral = /^-?(0|[1-9]\d*)(\.\d+)?([eE][+-]?\d+)?/;
 const WhiteSpace = /^[ \t\n\r]+/;
 
 /** @param {Parser} $ */
-export let skip = ($) => $.eat(WhiteSpace, undefined, false);
+export let skip = ($) => $.eat(WhiteSpace, false);
 
 /** @param {Parser} $ */
-export let json = ($) => $.rule("object", object) || $.rule("array", array);
+export let json = ($) => $.rule("object") || $.rule("array");
 
 /** @param {Parser} $ */
 export let object = ($) =>
   $.eat(LCurly) &&
-  ($.rule("objectItem", objectItem) &&
-    many(() => $.eat(Comma) && $.rule("objectItem", objectItem)),
+  ($.rule("objectItem") && $.many(() => $.eat(Comma) && $.rule("objectItem")),
   true) &&
   $.eat(RCurly);
 
 /** @param {Parser} $ */
 export let objectItem = ($) =>
-  $.eat(StringLiteral) && $.eat(Colon) && $.rule("value", value);
+  $.eat(StringLiteral) && $.eat(Colon) && $.rule("value");
 
 /** @param {Parser} $ */
 export let array = ($) =>
   $.eat(LSquare) &&
-  ($.rule("value", value) &&
-    many(() => $.eat(Comma) && $.rule("value", value)),
-  true) &&
+  ($.rule("value") && $.many(() => $.eat(Comma) && $.rule("value")), true) &&
   $.eat(RSquare);
 
 /** @param {Parser} $ */
 export let value = ($) =>
   $.eat(StringLiteral) ||
   $.eat(NumberLiteral) ||
-  $.rule("object", object) ||
-  $.rule("array", array) ||
+  $.rule("object") ||
+  $.rule("array") ||
   $.eat(True) ||
   $.eat(False) ||
   $.eat(Null);
+
+/**
+ * @param {Partial<import("../../src/types.js").Options> | undefined} options
+ */
+export function JsonParser(options) {
+  return new Parser({ json, object, objectItem, array, value, skip }, options);
+}

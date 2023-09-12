@@ -46,5 +46,4 @@ export interface TokenType {
   START_CHARS_HINT?: (string | number)[];
 }
 
-type TokenPattern = RegExp | string // | CustomPatternMatcherFunc | ICustomPattern
-
+type TokenPattern = RegExp | string; // | CustomPatternMatcherFunc | ICustomPattern
